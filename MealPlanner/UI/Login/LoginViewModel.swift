@@ -27,4 +27,15 @@ class LoginViewModel: ObservableObject {
         isLoading = false
     }
     
+    @MainActor func performRegister(username: String, password: String ) async {
+        isLoading = true
+        do {
+            let session = try await networkClient.register(username: username, password: password)
+            keyChain["token"] = session.token
+            isLoginSuccessful = true
+        } catch {
+            isError = true
+        }
+        isLoading = false
+    }
 }

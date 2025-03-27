@@ -109,6 +109,7 @@ struct TestLoginUI: View {
                 
                 Button(action: {
                         Task {
+                            await loginViewModel.performRegister(username: username, password: password)
                             await loginViewModel.performLogin(username: username, password: password)
                         }
                         

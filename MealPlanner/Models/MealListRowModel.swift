@@ -1,7 +1,7 @@
 import Foundation
 
 struct MealListRowModel: Identifiable {
-    let id: String
-    var savedPlanetNames: [String] = []
-    var meals: [Meals]
+    let id: Int
+    var savedMealsNames: [String] = []
+    var meals: [WeekPlan]
 }

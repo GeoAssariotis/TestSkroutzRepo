@@ -191,7 +191,14 @@ struct RegisterUI: View {
             }
             
             Button(action: {
-                print("Register button pressed")
+                if (password == confirmPassword)
+                {
+                    Task {
+//                        await loginViewModel.performLogin(username: username, password: password)
+                    }
+                } else {
+                    
+                }
             }) {
                 Text("Register")
                     .frame(maxWidth: .infinity)

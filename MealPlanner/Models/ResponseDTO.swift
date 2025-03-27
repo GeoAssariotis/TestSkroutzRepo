@@ -3,14 +3,14 @@ import Foundation
 struct WeekPlan: Decodable {
     
     var day: String
-    var meals: [Meals]
+    var meals: [Meal]
     
     enum CodingKeys: String, CodingKey {
         case day, meals
     }
 }
 
-struct Meals: Decodable, Identifiable {
+struct Meal: Decodable, Identifiable {
     
     var id: Int
     var isFavourite: Bool? = false

@@ -8,11 +8,16 @@ class MockNetworkClient: NetworkClient {
     
     func login(username: String, password: String) async throws -> APISession {
         try await Task.sleep(nanoseconds: 500)
-        return .init(userId: "pipis", token: "pipa")
+        return .init(token: "pipa")
     }
     
-    func fetchMeals(week: String) {
-        
+    func register(username: String, password: String) async throws -> APISession {
+        try await Task.sleep(nanoseconds: 500)
+        return .init(token: "pipa")
+    }
+    
+    func fetchMeals(week: Int) async throws -> [WeekPlan] {
+        return []
     }
     
     func favouriteMeal(mealName: String) {
