@@ -9,7 +9,11 @@ struct OpeningUI: View {
     @State private var isPasswordVisible: Bool = false
     
     @StateObject private var appDependencies = AppDependencies(networkclient: MainNetworkClient(), keyChain: Keychain())
-
+    @StateObject var loginViewModel: LoginViewModel
+    
+    init(networkClient: NetworkClient, keyChain: Keychain) {
+        _loginViewModel = StateObject(wrappedValue: LoginViewModel(networkClient: networkClient,keyChain: keyChain))
+    }
     
     var body: some View {
         VStack {
@@ -20,9 +24,9 @@ struct OpeningUI: View {
             .pickerStyle(SegmentedPickerStyle())
             .padding()
             if selectedTab == 0 {
-                TestLoginUI(networkClient: appDependencies.networkclient, keyChain: appDependencies.keyChain)
+                LoginUI(networkClient: appDependencies.networkclient, keyChain: appDependencies.keyChain)
             } else {
-                RegisterUI(username: $username, password: $password, confirmPassword: $confirmPassword, isPasswordVisible: $isPasswordVisible)
+                RegisterUI(networkClient: appDependencies.networkclient, keyChain: appDependencies.keyChain)
             }
             
             Spacer()
@@ -172,6 +176,6 @@ struct RegisterView: View {
 
 struct OpeningUI_Previews: PreviewProvider {
     static var previews: some View {
-        OpeningUI()
+        OpeningUI(networkClient: MainNetworkClient(), keyChain: Keychain())
     }
 }

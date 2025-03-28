@@ -3,10 +3,10 @@ import SwiftUI
 struct MealPlannerUI: View {
     
     @StateObject var viewModel: MealPlannerViewModel
-    @State var endingPage = 6
+    @State var endingPage = 1
     @State var mealPicked : Meal?
     @State var isPresented = false
-    private static let stepper = 5
+    private static let stepper = 1
     @State private var selectedIndexes: (sectionIndex: Int,planetIndex: Int) = (0,0)
 
 
@@ -27,11 +27,11 @@ struct MealPlannerUI: View {
             }
         }
         .task {
-            await viewModel.fetchAllMeals(endingPage: endingPage)
+            await viewModel.fetchAllMeals(week: endingPage)
         }
         .onChange(of: endingPage) { oldValue, newValue in
             Task{
-                await viewModel.fetchAllMeals(endingPage: endingPage)
+                await viewModel.fetchAllMeals(week: endingPage)
             }
         }
 //        .sheet(item: $planetPicked) { selectedPlanet in
@@ -43,21 +43,21 @@ struct MealPlannerUI: View {
     var listView: some View {
         List {
             ForEach(Array(viewModel.mealsSection.enumerated()), id: \.offset) { sectionIndex, section in
-                Section("\(section) Light Years") {
+                Section("\(section.day) \(section.name)") {
                     ScrollView(.horizontal) {
-//                        HStack {
-//                            if section.meals.isEmpty {
-//                                Text("pipis PIPA")
-//                            } else {
-//                                ForEach(Array(section.meals .enumerated()), id: \.offset) { mealIndex, meal in
-//                                    listRow(meal: meal, section: section)
-//                                        .onTapGesture {
-//                                            isPresented = true
-//                                            selectedIndexes = (sectionIndex,mealIndex)
-//                                    }
-//                                }
-//                            }
-//                        }
+                        HStack {
+                            if section.meals.isEmpty {
+                                Text("pipis PIPA")
+                            } else {
+                                ForEach(Array(section.meals.enumerated()), id: \.offset) { mealIndex, meal in
+                                    listRow(meal: meal, section: section)
+                                        .onTapGesture {
+                                            isPresented = true
+                                            selectedIndexes = (sectionIndex,mealIndex)
+                                    }
+                                }
+                            }
+                        }
                     }
                 }
             }
@@ -65,7 +65,7 @@ struct MealPlannerUI: View {
         .listStyle(PlainListStyle())
     }
     
-    @ViewBuilder func listRow(meal: Meal, section: MealListRowModel) -> some View{
+    @ViewBuilder func listRow(meal: Meal, section: DailyMealListRowModel) -> some View{
         let isSaved = section.savedMealsNames.contains(meal.name)
         if isSaved || section.savedMealsNames.isEmpty {
             VStack{
@@ -130,9 +130,9 @@ struct MealPlannerUI: View {
             } label: {
                 Image(systemName: "chevron.left.circle")
             }
-            .disabled(endingPage - 1 == Self.stepper)
+            .disabled(endingPage == Self.stepper)
             
-            Text("From \(endingPage - Self.stepper) to \(endingPage-1)")
+            Text("Page \(endingPage)")
             
             Button {
                 endingPage += Self.stepper

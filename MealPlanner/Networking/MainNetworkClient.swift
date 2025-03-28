@@ -6,15 +6,15 @@ class MainNetworkClient: NetworkClient {
     
     private var savedToken: String?
     
-    func login(username: String, password: String) async throws -> APISession {
+    func login(email: String, password: String) async throws -> APISession {
         
         var response: APISession = .init(token: "")
         
         do {
-            var url = URLComponents(string: "http://localhost:5000/users/tokens/sign_up")
+            var url = URLComponents(string: "http://localhost:5000/users/tokens/sign_in")
             
             url?.queryItems = [
-                URLQueryItem(name: "username", value: username),
+                URLQueryItem(name: "email", value: email),
                 URLQueryItem(name: "password", value: password)
             ]
             
@@ -25,30 +25,10 @@ class MainNetworkClient: NetworkClient {
             throw InternalError.networkError
         }
         
-//        guard let url = URL(string: "https://whale-app-jrqfx.ondigitalocean.app/v1/user/login") else {
-//            throw InternalError.dependencyFailed
-//        }
-//        let headers: HTTPHeaders = [.authorization(username: username, password: password)]
-//        let request = AF
-//            .request(
-//                url,
-//                method: .post,
-//                encoding: JSONEncoding(),
-//                headers: headers
-//            )
-//            .debugLog()
-//            .response{ response in
-//                guard let data = response.data else { debugPrint("Unable to process data") ; return }
-//                let jsonResponse = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
-//                debugPrint(jsonResponse as Any)
-//            }
-//        let response = try await request
-//            .serializingDecodable(APISession.self)
-//            .value
         return response
     }
     
-    func register(username: String, password: String) async throws -> APISession {
+    func register(email: String, password: String) async throws -> APISession {
         
         var response: APISession = .init(token: "")
         
@@ -56,79 +36,81 @@ class MainNetworkClient: NetworkClient {
             var url = URLComponents(string: "http://localhost:5000/users/tokens/sign_up")
             
             url?.queryItems = [
-                URLQueryItem(name: "username", value: username),
+                URLQueryItem(name: "email", value: email),
                 URLQueryItem(name: "password", value: password),
-                URLQueryItem(name: "password_confirmation", value: username)
+                URLQueryItem(name: "password_confirmation", value: password)
             ]
-
+            
             if let urlString = url?.url?.absoluteString {
                 response = try await performRequest(endpoint: urlString, method: .post, responseValueType: APISession.self)
             }
             
         } catch {
-            
+            throw InternalError.networkError
         }
         
-//        guard let url = URL(string: "https://whale-app-jrqfx.ondigitalocean.app/v1/user/login") else {
-//            throw InternalError.dependencyFailed
-//        }
-//        let headers: HTTPHeaders = [.authorization(username: username, password: password)]
-//        let request = AF
-//            .request(
-//                url,
-//                method: .post,
-//                encoding: JSONEncoding(),
-//                headers: headers
-//            )
-//            .debugLog()
-//            .response{ response in
-//                guard let data = response.data else { debugPrint("Unable to process data") ; return }
-//                let jsonResponse = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
-//                debugPrint(jsonResponse as Any)
-//            }
-//        let response = try await request
-//            .serializingDecodable(APISession.self)
-//            .value
         return response
+    }
+    
+    func fetchMeals(week: Int) async throws -> [Days] {
+        
+        
+        var response: WeekPlan = .init(id: 1, days: .init())
+        
+        do {
+            let url = "http://localhost:5000/api/v1/weeks/\(week)"
+            
+            response = try await performRequest(endpoint: url, method: .get, needsHeaders: true, responseValueType: WeekPlan.self)
+            //            ForEach(Array(section.meals .enumerated()), id: \.offset)
+            
+        } catch {
+            throw InternalError.networkError
+        }
+        
+        return response.days
     }
     
     func performRequest<ResponseValue: Decodable>(
         endpoint: String,
         method: HTTPMethod,
         parameters: [String: Any]? = nil,
+        needsHeaders: Bool? = false,
         responseValueType: ResponseValue.Type
     ) async throws -> ResponseValue {
-//        let url = URL(string: "http://localhost:5000/\(endpoint)")!
-        return try await AF.request(endpoint, method: method, parameters: parameters)
+        
+        if needsHeaders == false{
+            return try await AF.request(endpoint, method: method, parameters: parameters)
+            
+                .debugLog()
+                .response{ response in
+                    guard let data = response.data else { debugPrint("Unable to process data") ; return }
+                    let jsonResponse = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
+                    debugPrint(jsonResponse as Any)
+                }
+                .serializingDecodable(ResponseValue.self)
+                .value
+        } else {
+            var headers: HTTPHeaders = []
+            if let savedToken {
+                headers["Authorization"] = "Bearer \(savedToken)"
+            }
+            return try await AF.request(endpoint, method: method, parameters: parameters, headers: headers)
         
             .debugLog()
+            .response{ response in
+                guard let data = response.data else { debugPrint("Unable to process data") ; return }
+                let jsonResponse = NSString(data: data, encoding: String.Encoding.utf8.rawValue)
+                debugPrint(jsonResponse as Any)
+            }
             .serializingDecodable(ResponseValue.self)
             .value
     }
-    
-    func fetchMeals(week: Int) async throws -> [WeekPlan]{
-        var headers: HTTPHeaders = [
-            "X-Api-Key": "PdpCSK+RbLzxhpQzn+4Vww==aLHYjgwDQ4YBEoG3",
-            "Content-Type": "application/json"
-        ]
-        if let savedToken {
-            headers["token"] = savedToken
-        }
-        let value = try await AF.request(
-            "https://api.api-ninjas.com/v1/planets?min_distance_light_year=\(week)&max_distance_light_year=\(week)",
-            headers: headers
-        )
-            .debugLog()
-            .serializingDecodable(
-                [WeekPlan].self
-            ).value
-        return value
-    }
-    
-    func favouriteMeal(mealName: String) {
-    }
-    
-    func saveToken(token: String) {
-        
-    }
+}
+
+func favouriteMeal(mealName: String) {
+}
+
+func saveToken(token: String) {
+    savedToken = token
+}
 }

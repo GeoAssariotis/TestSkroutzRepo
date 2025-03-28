@@ -15,10 +15,10 @@ class LoginViewModel: ObservableObject {
     @Published var isLoading: Bool = false
     @Published var isLoginSuccessful: Bool = false
     
-    @MainActor func performLogin(username: String, password: String ) async {
+    @MainActor func performLogin(email: String, password: String ) async {
         isLoading = true
         do {
-            let session = try await networkClient.login(username: username, password: password)
+            let session = try await networkClient.login(email: email, password: password)
             keyChain["token"] = session.token
             isLoginSuccessful = true
         } catch {
@@ -27,10 +27,10 @@ class LoginViewModel: ObservableObject {
         isLoading = false
     }
     
-    @MainActor func performRegister(username: String, password: String ) async {
+    @MainActor func performRegister(email: String, password: String ) async {
         isLoading = true
         do {
-            let session = try await networkClient.register(username: username, password: password)
+            let session = try await networkClient.register(email: email, password: password)
             keyChain["token"] = session.token
             isLoginSuccessful = true
         } catch {

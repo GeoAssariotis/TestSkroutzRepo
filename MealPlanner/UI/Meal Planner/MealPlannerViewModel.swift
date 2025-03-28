@@ -9,21 +9,21 @@ class MealPlannerViewModel: ObservableObject {
         self.networkClient = networkClient
     }
     
-    @Published var mealsSection: [MealListRowModel] = []
+    @Published var mealsSection: [DailyMealListRowModel] = []
     @Published var isLoading: Bool = false
+    var daysMealsSection: [MealListRowModel] = []
+
     
-    var cachedMealListRowModel: Dictionary<Int,MealListRowModel> = [:]
+    var cachedMealListRowModel: Dictionary<Int,DailyMealListRowModel> = [:]
     
-    @MainActor func fetchAllMeals(endingPage: Int) async {
+    @MainActor func fetchAllMeals(week: Int) async {
         
         mealsSection.removeAll()
-        for week in endingPage-5..<endingPage {
             if let mealListRowModel = cachedMealListRowModel[week] {
                 mealsSection.append(mealListRowModel)
             } else {
                 await fetchMeals(week: week)
             }
-        }
     }
     
     @MainActor private func fetchMeals(week: Int) async {
@@ -33,9 +33,13 @@ class MealPlannerViewModel: ObservableObject {
         }
         do {
             let meals = try await networkClient.fetchMeals(week: week)
-            let mealListRowModel = MealListRowModel(id: UUID().hashValue, savedMealsNames: [], meals: meals)
-            mealsSection.append(mealListRowModel)
-            cachedMealListRowModel[week] = mealListRowModel
+            for meal in meals {
+                let dailyMealListRowModel = DailyMealListRowModel(id: UUID().hashValue, day: meal.formattedDate, name: meal.name, meals: meal.meals.unsafelyUnwrapped)
+                mealsSection.append(dailyMealListRowModel)
+//                cachedMealListRowModel[week] = mealListRowModel
+            }
+//            let mealListRowModel = MealListRowModel(id: UUID().hashValue, days: "", savedMealsNames: [], meals: meals)
+            
         } catch {
             print(error)
         }
@@ -44,7 +48,7 @@ class MealPlannerViewModel: ObservableObject {
         }
     }
     
-    @MainActor func saveMealAsFanourite(mealName: String, section: MealListRowModel) async {
+    @MainActor func saveMealAsFanourite(mealName: String, section: DailyMealListRowModel) async {
         
         let sectionIndex = mealsSection.firstIndex { planetSection in
             section.id == planetSection.id
@@ -55,7 +59,7 @@ class MealPlannerViewModel: ObservableObject {
         }
     }
     
-    @MainActor func emptyFavouritePlanets(section: MealListRowModel) async {
+    @MainActor func emptyFavouritePlanets(section: DailyMealListRowModel) async {
         
         let sectionIndex = mealsSection.firstIndex { mealSection in
             section.id == mealSection.id

@@ -7,17 +7,16 @@ struct MealPlannerApp: App {
     
     var body: some Scene {
         WindowGroup {
-//            if shouldShowLogin()
-//            {
-//                OpeningUI()
-//            } else {
-//                MealPlannerUI(networkClient: appDependencies.networkclient)
-//                    .environmentObject(appDependencies)
-//                    .onAppear{
-//                        appDependencies.networkclient.saveToken(token: try! appDependencies.keyChain.get("token")!)
-//                    }
-//            }
-            OpeningUI()
+            if shouldShowLogin()
+            {
+                OpeningUI(networkClient: appDependencies.networkclient, keyChain: appDependencies.keyChain)
+            } else {
+                MealPlannerUI(networkClient: appDependencies.networkclient)
+                    .environmentObject(appDependencies)
+                    .onAppear{
+                        appDependencies.networkclient.saveToken(token: try! appDependencies.keyChain.get("token")!)
+                    }
+            }
         }
     }
     

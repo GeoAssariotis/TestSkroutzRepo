@@ -1,28 +1,25 @@
-//
-//  RegisterUI.swift
-//  MealPlanner
-//
-//  Created by linq20 on 21/3/25.
-//
-
 import SwiftUI
+import KeychainAccess
 
 struct RegisterUI: View {
-    @Binding var username: String
-    @Binding var password: String
-    @Binding var confirmPassword: String
-    @Binding var isPasswordVisible: Bool
-    @State private var email: String = ""
-    @State private var isValidEmail: Bool = true
     
     private var emailRegex: String {
         return "[A-Z0-9a-z._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
     }
     
-    private func validateEmail() {
-        let emailTest = NSPredicate(format: "SELF MATCHES %@", emailRegex)
-        isValidEmail = emailTest.evaluate(with: email)
+    @StateObject var loginViewModel: LoginViewModel
+    @EnvironmentObject var appDependencies: AppDependencies
+    
+    init(networkClient: NetworkClient, keyChain: Keychain) {
+        _loginViewModel = StateObject(wrappedValue: LoginViewModel(networkClient: networkClient,keyChain: keyChain))
     }
+        
+//    @State var username: String = ""
+    @State var password: String = ""
+    @State var confirmPassword: String = ""
+    @State var isPasswordVisible: Bool = false
+    @State private var email: String = ""
+    @State private var isValidEmail: Bool = true
     
     //    var body: some View {
     //        VStack {
@@ -113,13 +110,13 @@ struct RegisterUI: View {
             HStack {
                 VStack(alignment: .leading) {
                     
-                    Text("Username")
-                        .font(.headline)
-                        .padding(.top, 40)
-                    
-                    TextField("Enter username", text: $username)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .frame(width: 300)
+//                    Text("Username")
+//                        .font(.headline)
+//                        .padding(.top, 40)
+//                    
+//                    TextField("Enter username", text: $username)
+//                        .textFieldStyle(RoundedBorderTextFieldStyle())
+//                        .frame(width: 300)
                     
                     Text("E-mail")
                         .font(.headline)
@@ -194,7 +191,7 @@ struct RegisterUI: View {
                 if (password == confirmPassword)
                 {
                     Task {
-//                        await loginViewModel.performLogin(username: username, password: password)
+                        await loginViewModel.performRegister(email: email, password: password)
                     }
                 } else {
                     
@@ -211,16 +208,31 @@ struct RegisterUI: View {
             }
             .padding(.top, 50)
             
+            
             Spacer()
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .alert("Something went wrong", isPresented: $loginViewModel.isError) {
+            
+        } message: {
+            Text("Invalid credentials")
+        }
+        .fullScreenCover(isPresented: $loginViewModel.isLoginSuccessful) {
+            MealPlannerUI(networkClient: appDependencies.networkclient)
+                .environmentObject(appDependencies)
+                .onAppear{
+                    appDependencies.networkclient.saveToken(token: try! appDependencies.keyChain.get("token")!)
+                }
+        }
+    }
+    
+    private func validateEmail() {
+        let emailTest = NSPredicate(format: "SELF MATCHES %@", emailRegex)
+        isValidEmail = emailTest.evaluate(with: email)
     }
 }
 
 
 #Preview {
-    RegisterUI(username: .constant("mockUsername"),
-               password: .constant("mockPassword"),
-               confirmPassword: .constant("mockPassword"),
-               isPasswordVisible: .constant(true))
+    RegisterUI(networkClient: MainNetworkClient(), keyChain: Keychain())
 }
